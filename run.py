@@ -27,7 +27,7 @@ from config import (
     MAX_MESSAGES, AWAY_STATUS
 )
 
-print('panopticon starting')
+print('Starting panopticon\nMessages will be logged below.')
 
 # Import IGNORE_SERVER separately, which was added later and might not exist in
 #   config.py for some users. This is to prevent the script from crashing.
@@ -52,28 +52,28 @@ def clean_filename(string):
 #   based on the channel type of the message.
 # It is affixed to the log directory set in config.py
 def make_filename(message):
-    if message.edited_timestamp:
-        time = message.edited_timestamp
+    if message.edited_at:
+        time = message.edited_at
     else:
-        time = message.timestamp
+        time = message.created_at
     timestamp = time.strftime('%F')
-    if message.channel.type == ChannelType.text:
+    if type(message.channel) is discord.TextChannel:
         return "{}/{}-{}/#{}-{}/{}.log".format(
             LOG_DIR,
-            clean_filename(message.server.name),
-            message.server.id,
+            clean_filename(message.guild.name),
+            message.guild.id,
             clean_filename(message.channel.name),
             message.channel.id,
             timestamp
         )
-    elif message.channel.type == ChannelType.private:
+    elif type(message.channel) is discord.DMChannel:
         return "{}/DM/{}-{}/{}.log".format(
             LOG_DIR,
             clean_filename(message.channel.user.name),
             message.channel.user.id,
             timestamp
         )
-    elif message.channel.type == ChannelType.group:
+    elif type(message.channel) is discord.GroupChannel:
         return "{}/DM/{}-{}/{}.log".format(
             LOG_DIR,
             clean_filename(message.channel.name),
@@ -92,7 +92,7 @@ def make_message(message):
     # Wrap the message ID in brackets, and prefix E: if the message was edited.
     # Also, base64-encode the message ID, because it's shorter.
     #   This uses less space on disk, and is easier to read in console.
-    message_id = '[E:' if message.edited_timestamp else '['
+    message_id = '[E:' if message.edited_at else '['
     message_id += "{}]".format(base64.b64encode(
         int(message.id).to_bytes(8, byteorder='little')
     ).decode('utf-8'))
@@ -100,10 +100,10 @@ def make_message(message):
     # Get the datetime from the message
     # If necessary, tell the naive datetime object it's in UTC
     #   and convert to localtime
-    if message.edited_timestamp:
-        time = message.edited_timestamp
+    if message.edited_at:
+        time = message.edited_at
     else:
-        time = message.timestamp
+        time = message.created_at
     if USE_LOCALTIME:
         time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
@@ -156,12 +156,12 @@ client = discord.Client()
 # On message send
 @client.event
 async def on_message(message):
-    if message.server and message.server.id in IGNORE_SERVERS:
+    if message.guild and message.guild.id in IGNORE_SERVERS:
         return
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
-
+    print(string)
 
 # On message edit
 # Note from discord.py documentation:
@@ -172,12 +172,12 @@ async def on_message(message):
 #   not fire the event.
 @client.event
 async def on_message_edit(_, message):
-    if message.server and message.server.id in IGNORE_SERVERS:
+    if message.guild and message.guild.id in IGNORE_SERVERS:
         return
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
-
+    print(string)
 
 # On ready
 # Typically, a bot, self-bot or otherwise, has an always-green/'active'
