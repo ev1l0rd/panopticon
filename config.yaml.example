@@ -1,0 +1,7 @@
+token: ''
+bot_account: True
+use_localtime: False
+log_dir: 'logs'
+ignore_servers:
+- example
+- second server you might want to ignore

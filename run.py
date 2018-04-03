@@ -6,38 +6,17 @@ Copyright 2016, Megumi Sonoda
 This file is licensed under the BSD 3-clause License
 '''
 
-# Imports from stdlib
-import asyncio
 import base64
-from datetime import datetime
 from datetime import timezone
 import os
 import re
-import signal
-import sys
-
-# Imports from dependencies
 import discord
-from discord.enums import ChannelType
+import yaml
 
 # Import configuration
-from config import (
-    TOKEN, BOT_ACCOUNT,
-    USE_LOCALTIME, LOG_DIR,
-    MAX_MESSAGES, AWAY_STATUS
-)
+config = yaml.safe_load(open('config.yaml'))
 
-print('Starting panopticon\nMessages will be logged below.')
-
-# Import IGNORE_SERVER separately, which was added later and might not exist in
-#   config.py for some users. This is to prevent the script from crashing.
-IGNORE_SERVERS = []
-try:
-    from config import IGNORE_SERVERS
-except ImportError:
-    pass
-except:
-    raise
+print('Starting panopticon')
 
 
 # This sanitizes an input string to remove characters that aren't valid
@@ -59,7 +38,7 @@ def make_filename(message):
     timestamp = time.strftime('%F')
     if type(message.channel) is discord.TextChannel:
         return "{}/{}-{}/#{}-{}/{}.log".format(
-            LOG_DIR,
+            config['log_dir'],
             clean_filename(message.guild.name),
             message.guild.id,
             clean_filename(message.channel.name),
@@ -68,14 +47,14 @@ def make_filename(message):
         )
     elif type(message.channel) is discord.DMChannel:
         return "{}/DM/{}-{}/{}.log".format(
-            LOG_DIR,
+            config['log_dir'],
             clean_filename(message.channel.user.name),
             message.channel.user.id,
             timestamp
         )
     elif type(message.channel) is discord.GroupChannel:
         return "{}/DM/{}-{}/{}.log".format(
-            LOG_DIR,
+            config['log_dir'],
             clean_filename(message.channel.name),
             message.channel.id,
             timestamp
@@ -89,48 +68,29 @@ def make_filename(message):
 # If the message was edited, prefix messageid with E:
 #   and use the edited timestamp and not the original.
 def make_message(message):
-    # Wrap the message ID in brackets, and prefix E: if the message was edited.
-    # Also, base64-encode the message ID, because it's shorter.
-    #   This uses less space on disk, and is easier to read in console.
     message_id = '[E:' if message.edited_at else '['
     message_id += "{}]".format(base64.b64encode(
         int(message.id).to_bytes(8, byteorder='little')
     ).decode('utf-8'))
-
-    # Get the datetime from the message
-    # If necessary, tell the naive datetime object it's in UTC
-    #   and convert to localtime
     if message.edited_at:
         time = message.edited_at
     else:
         time = message.created_at
-    if USE_LOCALTIME:
+    if config['use_localtime']:
         time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
-    # Convert the datetime to a string in [21:30:00] format
     timestamp = time.strftime('[%H:%M:%S]')
-
-    # Get the author's name, in distinct form, and wrap it
-    # in IRC-style brackets
     author = "<{}#{}>".format(
         message.author.name,
         message.author.discriminator
     )
-
-    # Get the message content. Use `.clean_content` to
-    #   substitute mentions for a nicer format
     content = message.clean_content.replace('\n', '\n(newline) ')
 
-    # If the message has attachments, grab their URLs
-    # attachments = '\n(attach) '.join(
-    #     [attachment['url'] for attachment in message.attachments]
-    # )
     attachments = ''
     if message.attachments:
         for attach in message.attachments:
             attachments += '\n(attach) {0[url]}'.format(attach)
 
-    # Use all of this to return as one string
     return("{} {} {} {} {}".format(
         message_id,
         timestamp,
@@ -144,49 +104,38 @@ def make_message(message):
 def write(filename, string):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'a', encoding='utf8') as file:
-        file.write(string + "\n") 
-        #print(string, file=file)
+        file.write(string + "\n")
 
 
-# Create client object
 client = discord.Client()
 
 
-# Register event handlers
-# On message send
 @client.event
 async def on_message(message):
-    if message.guild and message.guild.id in IGNORE_SERVERS:
+    if message.guild and message.guild.id in config['ignore_servers']:
         return
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
     print(string)
 
-# On message edit
-# Note from discord.py documentation:
-#   If the message is not found in the Client.messages cache, then these
-#   events will not be called. This happens if the message is too old
-#   or the client is participating in high traffic servers.
-# Through testing, messages from before the current client session also do
-#   not fire the event.
 @client.event
 async def on_message_edit(_, message):
-    if message.guild and message.guild.id in IGNORE_SERVERS:
+    if message.guild and message.guild.id in config['ignore_servers']:
         return
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
     print(string)
 
-# On ready
-# Typically, a bot, self-bot or otherwise, has an always-green/'active'
-#   status indicator. This provides the option to change the status when the
-#   actual user goes offline or away.
 @client.event
 async def on_ready():
-    await client.change_presence(status=AWAY_STATUS)
-
+    print('Succesfully started panopticon')
+    print('------------')
+    print('Logged in as:')
+    print(client.user.name)
+    print(client.user.id)
+    print('------------')
 
 # Run client
-client.run(TOKEN, bot=BOT_ACCOUNT, max_messages=MAX_MESSAGES)
+client.run(config['token'], bot=config['bot_account'], max_messages=7500)
