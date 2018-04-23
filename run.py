@@ -1,17 +1,43 @@
 #!/usr/bin/env python3
 
-'''
-Panopticon by Megumi Sonoda
-Copyright 2016, Megumi Sonoda
-This file is licensed under the BSD 3-clause License
-'''
-
 import base64
-from datetime import timezone
+from datetime import timezone, datetime
 import os
 import re
 import discord
 import yaml
+
+'''
+Panopticon by Megumi Sonoda
+Copyright 2016, Megumi Sonoda
+This file is licensed under the BSD 3-clause License
+
+Fork License:
+Copyright (c) 2018, Valentijn "ev1l0rd" V.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+'''
 
 # Import configuration
 config = yaml.safe_load(open('config.yaml'))
@@ -59,6 +85,21 @@ def make_filename(message):
             message.channel.id,
             timestamp
         )
+
+
+# This builds the relative file path & filename to log to,
+#   based on the channel type of the message.
+# It is affixed to the log directory set in config.py
+def make_member_filename(member):
+    time = datetime.now()
+    timestamp = time.strftime('%F')
+    return "{0}/{1}-{2}/#{3}/{4}.log".format(
+        config['log_dir'],
+        clean_filename(member.guild.name),
+        member.guild.id,
+        "guild-events",
+        timestamp
+    )
 
 
 # Uses a Message object to build a very pretty string.
@@ -119,6 +160,7 @@ async def on_message(message):
     write(filename, string)
     print(string)
 
+
 @client.event
 async def on_message_edit(_, message):
     if message.guild and message.guild.id in config['ignore_servers']:
@@ -127,6 +169,47 @@ async def on_message_edit(_, message):
     string = make_message(message)
     write(filename, string)
     print(string)
+
+
+@client.event
+async def on_member_join(member):
+    if member.guild and member.guild.id in config['ignore_servers']:
+        return
+    filename = make_member_filename(member)
+    string = "{} ({}) joined guild {}".format(member, member.id, member.guild)
+    write(filename, string)
+    print(string)
+
+
+@client.event
+async def on_member_remove(member):
+    if member.guild and member.guild.id in config['ignore_servers']:
+        return
+    filename = make_member_filename(member)
+    string = "{} ({}) left guild {}".format(member, member.id, member.guild)
+    write(filename, string)
+    print(string)
+
+
+@client.event
+async def on_member_ban(member):
+    if member.guild and member.guild.id in config['ignore_servers']:
+        return
+    filename = make_member_filename(member)
+    string = "{} ({}) got banned from guild {}".format(member, member.id, member.guild)
+    write(filename, string)
+    print(string)
+
+
+@client.event
+async def on_member_unban(member):
+    if member.guild and member.guild.id in config['ignore_servers']:
+        return
+    filename = make_member_filename(member)
+    string = "{} ({}) got unbanned from guild {}".format(member, member.id, member.guild)
+    write(filename, string)
+    print(string)
+
 
 @client.event
 async def on_ready():
