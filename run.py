@@ -88,10 +88,12 @@ def make_filename(message):
 
 
 # This builds the relative file path & filename to log to,
-#   based on the channel type of the message.
 # It is affixed to the log directory set in config.py
 def make_member_filename(member):
-    time = datetime.now()
+    if config['use_localtime']:
+        time = datetime.now()
+    else:
+        time = datetime.utcnow()
     timestamp = time.strftime('%F')
     return "{0}/{1}-{2}/#{3}/{4}.log".format(
         config['log_dir'],
@@ -141,6 +143,36 @@ def make_message(message):
     ))
 
 
+# Generate a reproducible message for guild member info logging
+# Output will be similar to the other one:
+# (memberid) [21:30:00] <user#0000>
+# Note that the actual _action_ will need to be appended manually.
+# memberid is base64 encoded to make it shorter
+def make_member_message(member):
+    if config['use_localtime']:
+        time = datetime.now()
+    else:
+        time = datetime.utcnow()
+    if config['use_localtime']:
+        time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
+    timestamp = time.strftime('[%H:%M:%S]')
+
+    member = "<{}#{}>".format(
+        member.name,
+        member.discriminator
+    )
+
+    member_id = "[{}]".format(base64.b64encode(
+        int(member.id).to_bytes(8, byteorder='little')
+    ).decode('utf-8'))
+
+    return ("{} {} {} ").format(
+        member_id,
+        timestamp,
+        member
+    )
+
+
 # Append to file, creating path if necessary
 def write(filename, string):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -176,7 +208,7 @@ async def on_member_join(member):
     if member.guild and member.guild.id in config['ignore_servers']:
         return
     filename = make_member_filename(member)
-    string = "{} ({}) joined guild {}".format(member, member.id, member.guild)
+    string = "{} {}".format(make_member_message(member), "Joined guild")
     write(filename, string)
     print(string)
 
@@ -186,7 +218,7 @@ async def on_member_remove(member):
     if member.guild and member.guild.id in config['ignore_servers']:
         return
     filename = make_member_filename(member)
-    string = "{} ({}) left guild {}".format(member, member.id, member.guild)
+    string = "{} {}".format(make_member_message(member), "Left guild")
     write(filename, string)
     print(string)
 
@@ -196,7 +228,7 @@ async def on_member_ban(member):
     if member.guild and member.guild.id in config['ignore_servers']:
         return
     filename = make_member_filename(member)
-    string = "{} ({}) got banned from guild {}".format(member, member.id, member.guild)
+    string = "{} {}".format(make_member_message(member), "Was banned from guild")
     write(filename, string)
     print(string)
 
@@ -206,7 +238,7 @@ async def on_member_unban(member):
     if member.guild and member.guild.id in config['ignore_servers']:
         return
     filename = make_member_filename(member)
-    string = "{} ({}) got unbanned from guild {}".format(member, member.id, member.guild)
+    string = "{} {}".format(make_member_message(member), "Was unbanned from guild")
     write(filename, string)
     print(string)
 
