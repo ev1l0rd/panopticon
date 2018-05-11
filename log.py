@@ -167,10 +167,11 @@ class Panopticon:
         )
 
     # Append to file, creating path if necessary
-    def write(filename, string):
+    def write(self, filename, string):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'a', encoding='utf8') as file:
             file.write(string + "\n")
+        logging.debug("{} - {}".format(filename, string))
 
     async def on_message(self, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
@@ -178,7 +179,6 @@ class Panopticon:
         filename = self.make_filename(message)
         string = self.make_message(message)
         self.write(filename, string)
-        logging.info("{} - {}", filename, string)
 
     async def on_message_edit(self, _, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
@@ -186,7 +186,6 @@ class Panopticon:
         filename = self.make_filename(message)
         string = self.make_message(message)
         self.write(filename, string)
-        logging.info(string)
 
     async def on_member_join(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
@@ -194,7 +193,6 @@ class Panopticon:
         filename = self.make_member_filename(member)
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
         self.write(filename, string)
-        logging.info("{} - {}", filename, string)
 
     async def on_member_remove(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
@@ -202,7 +200,6 @@ class Panopticon:
         filename = self.make_member_filename(member)
         string = "{} {}".format(self.make_member_message(member), "Left guild")
         self.write(filename, string)
-        logging.info("{} - {}", filename, string)
 
     async def on_member_ban(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
@@ -210,7 +207,6 @@ class Panopticon:
         filename = self.make_member_filename(member)
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
         self.write(filename, string)
-        logging.info("{} - {}", filename, string)
 
     async def on_member_unban(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
@@ -218,7 +214,6 @@ class Panopticon:
         filename = self.make_member_filename(member)
         string = "{} {}".format(self.make_member_message(member), "Was unbanned from guild")
         self.write(filename, string)
-        logging.info("{} - {}", filename, string)
 
 
 def setup(bot):

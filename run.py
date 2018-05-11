@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import discord
 from discord.ext import commands
 import yaml
 import logging.config
@@ -66,4 +67,4 @@ async def on_ready():
     client.load_extension("log")
 
 # Run client
-client.run(config['token'], bot=config['bot_account'], max_messages=7500)
+client.run(config['token'], bot=config['bot_account'], max_messages=7500, status=discord.Status.invisible)
