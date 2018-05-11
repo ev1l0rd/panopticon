@@ -6,6 +6,8 @@ import os
 import re
 import discord
 import yaml
+import logging
+import argparse
 
 '''
 Panopticon by Megumi Sonoda
@@ -39,8 +41,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 
+logging.basicConfig(format='%(asctime)s - [%(levelname)s] %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': True, })
+
 # Import configuration
-config = yaml.safe_load(open('config.yaml'))
+try:
+    config = yaml.safe_load(open('config.yaml'))
+except Exception as e:
+    raise e
 
 print('Starting panopticon')
 
@@ -132,7 +142,7 @@ def make_message(message):
     attachments = ''
     if message.attachments:
         for attach in message.attachments:
-            attachments += '\n(attach) {0[url]}'.format(attach)
+            attachments += '\n(attach) {0}'.format(attach.url)
 
     return("{} {} {} {} {}".format(
         message_id,
@@ -157,7 +167,7 @@ def make_member_message(member):
         time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
     timestamp = time.strftime('[%H:%M:%S]')
 
-    member = "<{}#{}>".format(
+    member_name = "<{}#{}>".format(
         member.name,
         member.discriminator
     )
@@ -169,7 +179,7 @@ def make_member_message(member):
     return ("{} {} {} ").format(
         member_id,
         timestamp,
-        member
+        member_name
     )
 
 
@@ -190,7 +200,7 @@ async def on_message(message):
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
-    print(string)
+    logging.info("{} - {}", filename, string)
 
 
 @client.event
@@ -200,7 +210,7 @@ async def on_message_edit(_, message):
     filename = make_filename(message)
     string = make_message(message)
     write(filename, string)
-    print(string)
+    logging.info(string)
 
 
 @client.event
@@ -210,7 +220,7 @@ async def on_member_join(member):
     filename = make_member_filename(member)
     string = "{} {}".format(make_member_message(member), "Joined guild")
     write(filename, string)
-    print(string)
+    logging.info("{} - {}", filename, string)
 
 
 @client.event
@@ -220,7 +230,7 @@ async def on_member_remove(member):
     filename = make_member_filename(member)
     string = "{} {}".format(make_member_message(member), "Left guild")
     write(filename, string)
-    print(string)
+    logging.info("{} - {}", filename, string)
 
 
 @client.event
@@ -230,7 +240,7 @@ async def on_member_ban(member):
     filename = make_member_filename(member)
     string = "{} {}".format(make_member_message(member), "Was banned from guild")
     write(filename, string)
-    print(string)
+    logging.info("{} - {}", filename, string)
 
 
 @client.event
@@ -240,7 +250,7 @@ async def on_member_unban(member):
     filename = make_member_filename(member)
     string = "{} {}".format(make_member_message(member), "Was unbanned from guild")
     write(filename, string)
-    print(string)
+    logging.info("{} - {}", filename, string)
 
 
 @client.event
