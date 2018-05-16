@@ -71,7 +71,7 @@ class Panopticon:
         elif type(message.channel) is discord.DMChannel:
             return "{}/DM/{}-{}/{}.log".format(
                 self.config['log_dir'],
-                self.clean_filename(message.channel.user.name),
+                self.clean_filename(message.channel.recipient.name),
                 message.channel.user.id,
                 timestamp
             )
