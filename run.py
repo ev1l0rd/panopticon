@@ -52,8 +52,10 @@ except Exception as e:
 
 print('Starting panopticon')
 
-client = commands.Bot(self_bot=True, command_prefix='thisaintacommandbotandshouldneverbe')
-client.remove_command('help')
+client = commands.Bot(self_bot=not config['bot_account'], 
+    command_prefix=config['prefix'] if config['commands_enabled'] else 'thisaintacommandbotandshouldneverbe')
+if not config['commands_enabled']:
+    client.remove_command('help')
 client.config = config
 
 
@@ -66,6 +68,8 @@ async def on_ready():
     print(client.user.id)
     print('------------')
     client.load_extension("log")
+    if config['commands_enabled']:
+        client.load_extension('logexisting')
 
 # Run client
 client.run(config['token'], bot=config['bot_account'], max_messages=7500, status=discord.Status.invisible)

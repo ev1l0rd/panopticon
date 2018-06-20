@@ -140,7 +140,7 @@ class Panopticon:
         else:
             time = message.created_at
         if self.config['use_localtime']:
-            time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
+            time = time.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
 
         timestamp = time.strftime('[%H:%M:%S]')
         author = "<{}#{}>".format(
@@ -178,7 +178,7 @@ class Panopticon:
         else:
             time = datetime.utcnow()
         if self.config['use_localtime']:
-            time = time.replace(tzinfo=timezone.utc).astimezone(tz=None)
+            time = time.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
         timestamp = time.strftime('[%H:%M:%S]')
 
         member_name = "<{}#{}>".format(

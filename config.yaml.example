@@ -5,3 +5,6 @@ log_dir: 'logs'
 ignore_servers:
 - example
 - second server you might want to ignore
+# Below is only relevant if you enable logexisting.py, see README for details
+enable_commands: False
+prefix: '>'
