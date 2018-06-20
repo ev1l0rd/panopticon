@@ -67,7 +67,8 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------------')
-    client.load_extension("log")
+    if not config['commands_enabled']:
+        client.load_extension("log")
     if config['commands_enabled']:
         client.load_extension('logexisting')
 
