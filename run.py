@@ -8,12 +8,13 @@ import argparse
 
 '''
 Panopticon by Megumi Sonoda
+
+Copyright (c) 2018, Valentijn "ev1l0rd" V.
+All rights reserved.
+
 Copyright 2016, Megumi Sonoda
 This file is licensed under the BSD 3-clause License
 
-Fork License:
-Copyright (c) 2018, Valentijn "ev1l0rd" V.
-All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

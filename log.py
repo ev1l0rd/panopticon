@@ -1,11 +1,11 @@
 '''
 Panopticon by Megumi Sonoda
-Copyright 2016, Megumi Sonoda
-This file is licensed under the BSD 3-clause License
 
-Fork License:
 Copyright (c) 2018, Valentijn "ev1l0rd" V.
 All rights reserved.
+
+Copyright 2016, Megumi Sonoda
+This file is licensed under the BSD 3-clause License
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -58,29 +58,37 @@ class Panopticon:
             time = message.edited_at
         else:
             time = message.created_at
-        timestamp = time.strftime('%F')
+        year = time.strftime('%Y')
+        month = time.strftime('%m')
+        day = time.strftime('%F')
         if type(message.channel) is discord.TextChannel:
-            return "{}/{}-{}/#{}-{}/{}.log".format(
+            return "{}/{}-{}/#{}-{}/{}/{}.log".format(
                 self.config['log_dir'],
                 self.clean_filename(message.guild.name),
                 message.guild.id,
                 self.clean_filename(message.channel.name),
                 message.channel.id,
-                timestamp
+                year,
+                month,
+                day
             )
         elif type(message.channel) is discord.DMChannel:
-            return "{}/DM/{}-{}/{}.log".format(
+            return "{}/DM/{}-{}/{}/{}/{}.log".format(
                 self.config['log_dir'],
                 self.clean_filename(message.channel.recipient.name),
                 message.channel.recipient.id,
-                timestamp
+                year,
+                month,
+                day
             )
         elif type(message.channel) is discord.GroupChannel:
-            return "{}/DM/{}-{}/{}.log".format(
+            return "{}/DM/{}-{}/{}/{}/{}.log".format(
                 self.config['log_dir'],
                 self.clean_filename(message.channel.name),
                 message.channel.id,
-                timestamp
+                year,
+                month,
+                day
             )
 
     # This builds the relative file path & filename to log to,
@@ -98,6 +106,23 @@ class Panopticon:
             "guild-events",
             timestamp
         )
+
+    # Dissects an embed for title, description and fields.
+    # Returns a string in the following format:
+    # (embed) ----
+    # (embed) Title
+    # (embed) ----
+    # (embed) Description
+    # (embed) ----
+    def dissect_embed(self, embed):
+        dissected_embed = '\n(embed) ----'
+        if embed.title:
+            dissected_embed += '\n(embed) {embed.title}'
+            dissected_embed += '\n(embed) ----'
+        if embed.description:
+            dissected_embed += '\n(embed) {embed.description}'
+            dissected_embed += '\n(embed) ----'      
+        return dissected_embed      
 
     # Uses a Message object to build a very pretty string.
     # Format:
@@ -128,6 +153,11 @@ class Panopticon:
         if message.attachments:
             for attach in message.attachments:
                 attachments += '\n(attach) {0}'.format(attach.url)
+
+        embeds = ''
+        if message.embeds:
+            for embed in message.embeds:
+                embeds += dissect_embed(embed)
 
         return("{} {} {} {} {}".format(
             message_id,
