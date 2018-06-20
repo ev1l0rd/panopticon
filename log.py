@@ -62,7 +62,7 @@ class Panopticon:
         month = time.strftime('%m')
         day = time.strftime('%F')
         if type(message.channel) is discord.TextChannel:
-            return "{}/{}-{}/#{}-{}/{}/{}.log".format(
+            return "{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
                 self.config['log_dir'],
                 self.clean_filename(message.guild.name),
                 message.guild.id,
@@ -157,7 +157,7 @@ class Panopticon:
         embeds = ''
         if message.embeds:
             for embed in message.embeds:
-                embeds += dissect_embed(embed)
+                embeds += self.dissect_embed(embed)
 
         return("{} {} {} {} {}".format(
             message_id,
