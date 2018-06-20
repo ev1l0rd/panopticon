@@ -166,11 +166,11 @@ class logExisting:
             await ctx.invoke(self.bot.get_command('archive_channel'), channel.id) 
 
     @commands.command()
-    async def archive_server(self, ctx, server_id):
+    async def archive_server(self, ctx, server_id: int):
         '''
         Archives the server with the passed in snowflake.
         '''
-        guild = await self.bot.get_guild(server_id)
+        guild = self.bot.get_guild(server_id)
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).read_messages:
                 await ctx.invoke(self.bot.get_command('archive_channel'), channel.id)
@@ -184,24 +184,26 @@ class logExisting:
             await ctx.invoke(self.bot.get_command('archive_server'), guild.id)
 
     @commands.command()
-    async def archive_channel(self, ctx, channel_id):
+    async def archive_channel(self, ctx, channel_id: int):
         '''
         Archives an individual channel.
 
         Normally there is little reason to call this, it's usually called under the hood by the other commands.
         '''
-        channel = await self.bot.get_channel(channel_id)
+        channel = self.bot.get_channel(channel_id)
         async for message in channel.history(limit=None):
             path = self.make_filename(message)
             store_message = self.make_message(message)
             self.write(path, store_message)
+        print('Succesfully archived {}'.format(str(channel)))
 
     @commands.command()
-    async def archive_dm(self, ctx, user_id):
+    async def archive_dm(self, ctx, user_id: int):
         '''
         Archives all your DMs with a user.
         '''
-        channel = await self.bot.get_user(user_id).dm_channel
+        channel = self.bot.get_user(user_id).dm_channel
+        await ctx.send('Archiving DMs for the user.')
         await ctx.invoke(self.bot.get_command('archive_channel'), channel.id)
 
 def setup(bot):
