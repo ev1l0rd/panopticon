@@ -168,7 +168,7 @@ class logExisting:
     @commands.command()
     async def archive_server(self, ctx, server_id: int):
         '''
-        Archives the server with the passed in snowflake.
+        Archives the server with the passed in server ID.
         '''
         guild = self.bot.get_guild(server_id)
         for channel in guild.text_channels:
@@ -191,10 +191,14 @@ class logExisting:
         Normally there is little reason to call this, it's usually called under the hood by the other commands.
         '''
         channel = self.bot.get_channel(channel_id)
-        async for message in channel.history(limit=None):
+        store_message = []
+        for message in await channel.history(limit=None, reverse=True).flatten():
             path = self.make_filename(message)
-            store_message = self.make_message(message)
-            self.write(path, store_message)
+            store_message.append([path, self.make_message(message)])
+
+        store_message.sort(key= lambda x: x[0])
+        for message in store_message:
+            self.write(message[0], message[1])
         print('Succesfully archived {}'.format(str(channel)))
 
     @commands.command()
