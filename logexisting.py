@@ -197,7 +197,7 @@ class logExisting:
         channel = self.bot.get_channel(channel_id)
         print('Started archival of {}'.format(str(channel)))
         store_message = []
-        for message in await channel.history(limit=None, reverse=True).flatten():
+        async for message in channel.history(limit=None, reverse=True):
             path = self.make_filename(message)
             store_message.append([path, self.make_message(message), message.created_at])
 
