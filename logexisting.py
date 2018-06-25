@@ -194,9 +194,9 @@ class logExisting:
         store_message = []
         for message in await channel.history(limit=None, reverse=True).flatten():
             path = self.make_filename(message)
-            store_message.append([path, self.make_message(message)])
+            store_message.append([path, self.make_message(message)], message.created_at)
 
-        store_message.sort(key= lambda x: x[0])
+        store_message.sort(key= lambda x: x[2])
         for message in store_message:
             self.write(message[0], message[1])
         print('Succesfully archived {}'.format(str(channel)))
