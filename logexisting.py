@@ -149,9 +149,12 @@ class logExisting:
     async def archive_all(self, ctx):
         '''
         Archives EVERYTHING, DMs and all guilds.
+
+        DM restrictions still apply.
         '''
         await ctx.invoke(self.bot.get_command('archive_dms'))
         await ctx.invoke(self.bot.get_command('archive_servers'))
+        print('Everything has been archived!')
 
     @commands.command()
     async def archive_dms(self, ctx):
@@ -171,6 +174,7 @@ class logExisting:
         Archives the server with the passed in server ID.
         '''
         guild = self.bot.get_guild(server_id)
+        print('Started archival of {}'.format(str(guild)))
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).read_messages:
                 await ctx.invoke(self.bot.get_command('archive_channel'), channel.id)
@@ -191,6 +195,7 @@ class logExisting:
         Normally there is little reason to call this, it's usually called under the hood by the other commands.
         '''
         channel = self.bot.get_channel(channel_id)
+        print('Started archival of {}'.format(str(channel)))
         store_message = []
         for message in await channel.history(limit=None, reverse=True).flatten():
             path = self.make_filename(message)
@@ -207,7 +212,6 @@ class logExisting:
         Archives all your DMs with a user.
         '''
         channel = self.bot.get_user(user_id).dm_channel
-        await ctx.send('Archiving DMs for the user.')
         await ctx.invoke(self.bot.get_command('archive_channel'), channel.id)
 
 def setup(bot):
