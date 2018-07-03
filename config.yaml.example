@@ -1,6 +1,7 @@
 token: ''
 bot_account: True
-use_localtime: False
+save_files: False
+# This is disabled by default, turn on if you want to store attachments.
 log_dir: 'logs'
 ignore_servers:
 - example

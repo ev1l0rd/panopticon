@@ -4,6 +4,8 @@ import datetime
 import base64
 import os
 import re
+import logging
+
 '''
 logexisting.py - Module for panopticon to log existing messages.
 Copyright (C) 2018 - Valentijn V.
@@ -29,6 +31,16 @@ class logExisting:
 
     ## SECTION FOR STUFF LIFTED FROM LOG.PY
 
+    # This stores all attachments on a message using aiohttp in the following structure:
+    #   path_to_log_file/base64messageid/attachment
+    async def save_files(self, message, filename):
+        base_path = filename.replace('.log','/{}'.format(base64.urlsafe_b64encode(message.id)))
+        for attach in message.attachments:
+            try:
+                await attach.save('{}/{}'.format(base_path, filename))
+            except Exception as e:
+                logging.error('Could not store attachment: {}'.format(e))
+
     # Uses a Message object to build a very pretty string.
     # Format:
     #   (messageid) [21:30:00] <user#0000> hello world
@@ -44,8 +56,6 @@ class logExisting:
             time = message.edited_at
         else:
             time = message.created_at
-        if self.config['use_localtime']:
-            time = time.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
 
         timestamp = time.strftime('[%H:%M:%S]')
         author = "<{}#{}>".format(
@@ -200,6 +210,8 @@ class logExisting:
         async for message in channel.history(limit=None, reverse=True):
             path = self.make_filename(message)
             store_message.append([path, self.make_message(message), message.created_at])
+            if message.attachments and self.config['save_files']:
+                await self.save_files(message, path)
 
         store_message.sort(key= lambda x: x[2])
         for message in store_message:
