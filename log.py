@@ -42,6 +42,52 @@ class Panopticon:
         self.bot = bot
         self.config = bot.config
 
+    # This determines what changed on a member.
+    # Returns two variables: needs_registering and a dict called "changed_data"
+    # needs_registering is a variable that determines if the member change should be logged
+    # changed_data is a dict containing the changed info with the values of:
+    # - old_username = str containing new guild nickname
+    # - new_username = str containing old guild nickname
+    # - added_roles = list of Roles that were added
+    # - deleted_roles = list of Roles that were removed
+    # Each should speak for itself.
+    def member_changed(self, before, after):
+        needs_registering = False
+        changed_data = {}
+        if before.display_name != after.display_name:
+            needs_registering = True
+            changed_data["old_username"] = before.display_name
+            changed_data["new_username"] = after.display_name
+        if len(before.roles) > len(after.roles): # Roles before is larger, means user has lost a role.
+            changed_data["deleted_roles"] = []
+            needs_registering = True
+            for role in before.roles:
+                if role.id == before.guild.id: # Skip everyone role
+                    continue
+                if role not in after.roles:
+                    changed_data["deleted_roles"].append(role)
+        if len(before.roles) < len(after.roles): # Roles after is larger, meaning user gained roles.
+            changed_data["added_roles"] = []
+            needs_registering = True
+            for role in after.roles:
+                if role.id == before.guild.id: # Skip everyone role
+                    continue
+                if role not in before.roles:
+                    changed_data["added_roles"].append(role)
+        return needs_registering, changed_data
+
+    # This function stringifies roles.
+    # Param: roles = List of roles to turn into a string
+    # Returns str
+    def stringify_roles(self, roles):
+        role_str = ""
+        length = len(roles)
+        for idx, role in enumerate(roles):
+            role_str += role.name
+            if idx != length - 1: # idx starts at 0
+                role_str += ", "
+        return role_str
+
     # This stores all attachments on a message using aiohttp in the following structure:
     #   path_to_log_file/base64messageid/attachment
     async def save_files(self, message, filename):
@@ -245,6 +291,24 @@ class Panopticon:
         filename = self.make_member_filename(member)
         string = "{} {}".format(self.make_member_message(member), "Was unbanned from guild")
         self.write(filename, string)
+
+    async def on_member_update(self, before, after):
+        if before.guild and before.guild.id in self.config['ignore_servers']:
+            return
+        needs_registering, changed_data = self.member_changed(before, after)
+        if not needs_registering:
+            return
+        strings = []
+        prefix = self.make_member_message(after)
+        if "old_username" in changed_data:
+            strings.append("{} {} {} {}".format(prefix, changed_data["old_username"], "is now known under the username", changed_data["new_username"]))
+        if "added_roles" in changed_data:
+            strings.append("{} {} {}".format(prefix, "Got the following roles added:", self.stringify_roles(changed_data["added_roles"])))
+        if "deleted_roles" in changed_data:
+            strings.append("{} {} {}".format(prefix, "Got the following roles removed:", self.stringify_roles(changed_data["deleted_roles"])))
+        filename = self.make_member_filename(after)
+        for string in strings:
+            self.write(filename, string)
 
 
 def setup(bot):
