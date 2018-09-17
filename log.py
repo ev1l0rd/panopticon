@@ -148,16 +148,33 @@ class Panopticon:
 
     # This builds the relative file path & filename to log to,
     # It is affixed to the log directory set in config.py
-    def make_member_filename(self, member):
+    # Optionally can accept an action param for a subfolder.
+    def make_member_filename(self, member, action):
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
-        return "{0}/{1}-{2}/#{3}/{4}.log".format(
+        return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
             self.config['log_dir'],
             self.clean_filename(member.guild.name),
             member.guild.id,
             "guild-events",
+            action,
             timestamp
         )
+
+    # Variant of the above function that takes an additional "guild" flag
+    # Needed for on_member_unban.
+    def make_member_separate_guild_filename(self, member, action, guild):
+        time = datetime.utcnow()
+        timestamp = time.strftime('%F')
+        return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
+            self.config['log_dir'],
+            self.clean_filename(guild.name),
+            guild.id,
+            "guild-events",
+            action,
+            timestamp
+        )
+
 
     # Dissects an embed for title, description and fields.
     # Returns a string in the following format:
@@ -267,28 +284,28 @@ class Panopticon:
     async def on_member_join(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member)
+        filename = self.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
         self.write(filename, string)
 
     async def on_member_remove(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member)
+        filename = self.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Left guild")
         self.write(filename, string)
 
     async def on_member_ban(self, _, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member)
+        filename = self.make_member_filename(member, "bans")
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
         self.write(filename, string)
 
-    async def on_member_unban(self, _, member):
-        if member.guild and member.guild.id in self.config['ignore_servers']:
+    async def on_member_unban(self, guild, member):
+        if guild and guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member)
+        filename = self.make_member_separate_guild_filename(member, "bans", guild)
         string = "{} {}".format(self.make_member_message(member), "Was unbanned from guild")
         self.write(filename, string)
 
@@ -306,7 +323,7 @@ class Panopticon:
             strings.append("{} {} {}".format(prefix, "Got the following roles added:", self.stringify_roles(changed_data["added_roles"])))
         if "deleted_roles" in changed_data:
             strings.append("{} {} {}".format(prefix, "Got the following roles removed:", self.stringify_roles(changed_data["deleted_roles"])))
-        filename = self.make_member_filename(after)
+        filename = self.make_member_filename(after, "guild-updates")
         for string in strings:
             self.write(filename, string)
 
