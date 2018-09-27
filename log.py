@@ -36,6 +36,7 @@ import base64
 from time import timezone
 import os
 import logging
+import shared_funcs
 
 class Panopticon:
     def __init__(self, bot):
@@ -76,163 +77,20 @@ class Panopticon:
                     changed_data["added_roles"].append(role)
         return needs_registering, changed_data
 
-    # This function stringifies roles.
-    # Param: roles = List of roles to turn into a string
-    # Returns str
-    def stringify_roles(self, roles):
-        role_str = ""
-        length = len(roles)
-        for idx, role in enumerate(roles):
-            role_str += role.name
-            if idx != length - 1: # idx starts at 0
-                role_str += ", "
-        return role_str
 
-    # This stores all attachments on a message using aiohttp in the following structure:
-    #   path_to_log_file/base64messageid/attachment
-    async def save_files(self, message, filename):
-        base_path = filename.replace('.log','/{}'.format(base64.urlsafe_b64encode(message.id)))
-        for attach in message.attachments:
-            try:
-                await attach.save('{}/{}'.format(base_path, filename))
-            except Exception as e:
-                logging.error('Could not store attachment: {}'.format(e))
-
-    # This sanitizes an input string to remove characters that aren't valid
-    #   in filenames. There are a lot of other bad filenames that can appear,
-    #   but given the predictable nature of our input in this application,
-    #   they aren't handled here.
-    def clean_filename(self, string):
-        return re.sub(r'[/\\:*?"<>|\x00-\x1f]', '', string)
-
-    # This builds the relative file path & filename to log to,
-    #   based on the channel type of the message.
-    # It is affixed to the log directory set in config.py
-    def make_filename(self, message):
-        if message.edited_at:
-            time = message.edited_at
-        else:
-            time = message.created_at
-        year = time.strftime('%Y')
-        month = time.strftime('%m')
-        day = time.strftime('%F')
-        if type(message.channel) is discord.TextChannel:
-            return "{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
-                self.config['log_dir'],
-                self.clean_filename(message.guild.name),
-                message.guild.id,
-                self.clean_filename(message.channel.name),
-                message.channel.id,
-                year,
-                month,
-                day
-            )
-        elif type(message.channel) is discord.DMChannel:
-            return "{}/DM/{}-{}/{}/{}/{}.log".format(
-                self.config['log_dir'],
-                self.clean_filename(message.channel.recipient.name),
-                message.channel.recipient.id,
-                year,
-                month,
-                day
-            )
-        elif type(message.channel) is discord.GroupChannel:
-            return "{}/DM/{}-{}/{}/{}/{}.log".format(
-                self.config['log_dir'],
-                self.clean_filename(message.channel.name),
-                message.channel.id,
-                year,
-                month,
-                day
-            )
-
-    # This builds the relative file path & filename to log to,
-    # It is affixed to the log directory set in config.py
-    # Optionally can accept an action param for a subfolder.
-    def make_member_filename(self, member, action):
-        time = datetime.utcnow()
-        timestamp = time.strftime('%F')
-        return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-            self.config['log_dir'],
-            self.clean_filename(member.guild.name),
-            member.guild.id,
-            "guild-events",
-            action,
-            timestamp
-        )
-
-    # Variant of the above function that takes an additional "guild" flag
+    # Variant of make_member_filename that takes an additional "guild" flag
     # Needed for on_member_unban.
     def make_member_separate_guild_filename(self, member, action, guild):
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
         return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
             self.config['log_dir'],
-            self.clean_filename(guild.name),
+            shared_funcs.clean_filename(guild.name),
             guild.id,
             "guild-events",
             action,
             timestamp
         )
-
-
-    # Dissects an embed for title, description and fields.
-    # Returns a string in the following format:
-    # (embed) ----
-    # (embed) Title
-    # (embed) ----
-    # (embed) Description
-    # (embed) ----
-    def dissect_embed(self, embed):
-        dissected_embed = '\n(embed) ----'
-        if embed.title:
-            dissected_embed += '\n(embed) {embed.title}'
-            dissected_embed += '\n(embed) ----'
-        if embed.description:
-            dissected_embed += '\n(embed) {embed.description}'
-            dissected_embed += '\n(embed) ----'      
-        return dissected_embed      
-
-    # Uses a Message object to build a very pretty string.
-    # Format:
-    #   (messageid) [21:30:00] <user#0000> hello world
-    # Message ID will be base64-encoded since it becomes shorter that way.
-    # If the message was edited, prefix messageid with E:
-    #   and use the edited timestamp and not the original.
-    def make_message(self, message):
-        message_id = '[E:' if message.edited_at else '['
-        message_id += "{}]".format(base64.b64encode(
-            int(message.id).to_bytes(8, byteorder='little')
-        ).decode('utf-8'))
-        if message.edited_at:
-            time = message.edited_at
-        else:
-            time = message.created_at
-
-        timestamp = time.strftime('[%H:%M:%S]')
-        author = "<{}#{}>".format(
-            message.author.name,
-            message.author.discriminator
-        )
-        content = message.clean_content.replace('\n', '\n(newline) ')
-
-        attachments = ''
-        if message.attachments:
-            for attach in message.attachments:
-                attachments += '\n(attach) {0}'.format(attach.url)
-
-        embeds = ''
-        if message.embeds:
-            for embed in message.embeds:
-                embeds += self.dissect_embed(embed)
-
-        return("{} {} {} {} {}".format(
-            message_id,
-            timestamp,
-            author,
-            content,
-            attachments
-        ))
 
     # Generate a reproducible message for guild member info logging
     # Output will be similar to the other one:
@@ -258,56 +116,50 @@ class Panopticon:
             member_name
         )
 
-    # Append to file, creating path if necessary
-    def write(self, filename, string):
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'a', encoding='utf8') as file:
-            file.write(string + "\n")
-        logging.debug("{} - {}".format(filename, string))
 
     async def on_message(self, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_filename(message)
-        string = self.make_message(message)
-        self.write(filename, string)
+        filename = shared_funcs.make_filename(message)
+        string = shared_funcs.make_message(message)
+        shared_funcs.write(filename, string)
         if message.attachments and self.config['save_files']:
-            await self.save_files(message, filename)
+            await shared_funcs.save_files(message, filename)
 
     async def on_message_edit(self, _, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_filename(message)
-        string = self.make_message(message)
-        self.write(filename, string)
+        filename = shared_funcs.make_filename(message)
+        string = shared_funcs.make_message(message)
+        shared_funcs.write(filename, string)
 
     async def on_member_join(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member, "joins-leaves")
+        filename = shared_funcs.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
-        self.write(filename, string)
+        shared_funcs.write(filename, string)
 
     async def on_member_remove(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member, "joins-leaves")
+        filename = shared_funcs.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Left guild")
-        self.write(filename, string)
+        shared_funcs.write(filename, string)
 
     async def on_member_ban(self, _, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = self.make_member_filename(member, "bans")
+        filename = shared_funcs.make_member_filename(member, "bans")
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
-        self.write(filename, string)
+        shared_funcs.write(filename, string)
 
     async def on_member_unban(self, guild, member):
         if guild and guild.id in self.config['ignore_servers']:
             return
         filename = self.make_member_separate_guild_filename(member, "bans", guild)
         string = "{} {}".format(self.make_member_message(member), "Was unbanned from guild")
-        self.write(filename, string)
+        shared_funcs.write(filename, string)
 
     async def on_member_update(self, before, after):
         if before.guild and before.guild.id in self.config['ignore_servers']:
@@ -320,12 +172,12 @@ class Panopticon:
         if "old_username" in changed_data:
             strings.append("{} {} {} {}".format(prefix, changed_data["old_username"], "is now known under the username", changed_data["new_username"]))
         if "added_roles" in changed_data:
-            strings.append("{} {} {}".format(prefix, "Got the following roles added:", self.stringify_roles(changed_data["added_roles"])))
+            strings.append("{} {} {}".format(prefix, "Got the following roles added:", shared_funcs.stringify_roles(changed_data["added_roles"])))
         if "deleted_roles" in changed_data:
-            strings.append("{} {} {}".format(prefix, "Got the following roles removed:", self.stringify_roles(changed_data["deleted_roles"])))
-        filename = self.make_member_filename(after, "guild-updates")
+            strings.append("{} {} {}".format(prefix, "Got the following roles removed:", shared_funcs.stringify_roles(changed_data["deleted_roles"])))
+        filename = shared_funcs.make_member_filename(after, "guild-updates")
         for string in strings:
-            self.write(filename, string)
+            shared_funcs.write(filename, string)
 
 
 def setup(bot):
