@@ -39,16 +39,29 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', help='Config file location.', default=None)
+    return parser.parse_args()
+
+arguments = parse_arguments()
+
 logging.basicConfig(format='%(asctime)s - [%(levelname)s] %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logging.config.dictConfig({
     'version': 1,
     'disable_existing_loggers': True, })
 
 # Import configuration
-try:
-    config = yaml.safe_load(open('config.yaml'))
-except Exception as e:
-    raise e
+if not arguments.config:
+    try:
+        config = yaml.safe_load(open('config.yaml'))
+    except Exception as e:
+        raise e
+else:
+    try:
+        config = yaml.safe_load(open(arguments.config))
+    except Exception as e:
+        raise e
 
 print('Starting panopticon')
 
