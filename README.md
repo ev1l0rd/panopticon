@@ -29,6 +29,8 @@ Panopticon is available under the terms of the BSD 3-clause license, which is lo
 
 logexisting.py is licensed under the AGPLv3
 
+As of tag 1.0.0, any new contributions or changes are under the AGPLv3. Code before this tag is under BSD 3-clause, with the exemption of `logexisting.py`.
+
 ## Support
 
 [![Invite](https://canary.discordapp.com/api/guilds/432597236057112604/widget.png?style=banner3)](https://discord.gg/Q6jmQcV)
