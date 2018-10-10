@@ -23,12 +23,13 @@ def stringify_roles(roles):
     return role_str
 
 # This stores all attachments on a message in the following structure:
-#   path_to_log_file/base64messageid/attachment
+#   path_to_log_file/messageid/attachment
 async def save_files(message, filename):
-    base_path = filename.replace('.log','/{}'.format(base64.urlsafe_b64encode(message.id)))
+    base_path = filename.replace('.log','/{}/'.format(message.id))
+    os.makedirs(os.path.dirname(base_path), exist_ok=True)
     for attach in message.attachments:
         try:
-            await attach.save('{}/{}'.format(base_path, filename))
+            await attach.save(fp=base_path + attach.filename)
         except Exception as e:
             logging.error('Could not store attachment: {}'.format(e))
 
