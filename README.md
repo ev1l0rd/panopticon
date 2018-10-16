@@ -7,13 +7,22 @@ A user-focused message logger for Discord, a la the built-in logging present in 
 * Python 3.5 or greater
 * [discord.py](https://github.com/Rapptz/discord.py) (rewrite branch)
 * pyyaml
+* `supervisord` if you want to use `run.py`. `supervisord` is Linux only.
 
 ## Installation, setup, and usage
 
+### Easy setup:
 * Clone the repo
 * Install the requirements `pip install --user -r requirements.txt`
-* Copy config.py.example to config.py and edit it
-* `./run.py`
+* Copy `bot.yaml.example` in the config folder to the root directory and name it `config.yaml` and fill out the config options.
+* `python ./panopticon.py`
+
+### Multi-config setup
+* Multiple configs only work on Linux systems.
+* Make sure you have `supervisord` installed.
+* Copy `bot.yaml.example` to `bot.yaml` and fill out the config options.
+* `python run.py`
+* Afterwards you can manage the processes using `supervisorctl`.
 
 Attachment logging is possible, although it is disabled by default out of storage concerns. To turn it on, just flip change the setting in config.yaml . Attachment logging is done for both `log.py` and `logexisting.py`. Attachment logging may fail due to the attachment being deleted, this is logged to the console as a warning.
 
