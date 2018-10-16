@@ -106,7 +106,7 @@ class Panopticon:
     async def on_message(self, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_filename(message, self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_filename(message, self.bot.appinfo.name, self.bot.appinfo.id)
         string = shared_funcs.make_message(message)
         shared_funcs.write(filename, string)
         if message.attachments and self.config['save_files']:
@@ -115,28 +115,28 @@ class Panopticon:
     async def on_message_edit(self, _, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_filename(message, self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_filename(message, self.bot.appinfo.name, self.bot.appinfo.id)
         string = shared_funcs.make_message(message)
         shared_funcs.write(filename, string)
 
     async def on_member_join(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.appinfo.name, self.bot.appinfo.id)
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
         shared_funcs.write(filename, string)
 
     async def on_member_remove(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.appinfo.name, self.bot.appinfo.id)
         string = "{} {}".format(self.make_member_message(member), "Left guild")
         shared_funcs.write(filename, string)
 
     async def on_member_ban(self, _, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "bans", self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_member_filename(member, "bans", self.bot.appinfo.name, self.bot.appinfo.id)
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
         shared_funcs.write(filename, string)
 
@@ -161,7 +161,7 @@ class Panopticon:
             strings.append("{} {} {}".format(prefix, "Got the following roles added:", shared_funcs.stringify_roles(changed_data["added_roles"])))
         if "deleted_roles" in changed_data:
             strings.append("{} {} {}".format(prefix, "Got the following roles removed:", shared_funcs.stringify_roles(changed_data["deleted_roles"])))
-        filename = shared_funcs.make_member_filename(after, "guild-updates", self.bot.app_info.name, self.bot.app_info.id)
+        filename = shared_funcs.make_member_filename(after, "guild-updates", self.bot.appinfo.name, self.bot.appinfo.id)
         for string in strings:
             shared_funcs.write(filename, string)
 

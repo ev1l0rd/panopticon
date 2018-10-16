@@ -69,7 +69,7 @@ def make_filename(message, appname, appid):
     day = time.strftime('%F')
     if type(message.channel) is discord.TextChannel:
         return "logs/{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
-            appname + '-' + appid,
+            appname + '-' + str(appid),
             clean_filename(message.guild.name),
             message.guild.id,
             clean_filename(message.channel.name),
@@ -80,7 +80,7 @@ def make_filename(message, appname, appid):
         )
     elif type(message.channel) is discord.DMChannel:
         return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
-            appname + '-' + appid,
+            appname + '-' + str(appid),
             clean_filename(message.channel.recipient.name),
             message.channel.recipient.id,
             year,
@@ -89,7 +89,7 @@ def make_filename(message, appname, appid):
         )
     elif type(message.channel) is discord.GroupChannel:
         return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
-            appname + '-' + appid,
+            appname + '-' + str(appid),
             clean_filename(message.channel.name),
             message.channel.id,
             year,
@@ -104,7 +104,7 @@ def make_member_filename(member, action, appname, appid):
     time = datetime.utcnow()
     timestamp = time.strftime('%F')
     return "logs/{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-        appname + '-' + appid,
+        appname + '-' + str(appid),
         clean_filename(member.guild.name),
         member.guild.id,
         "guild-events",
