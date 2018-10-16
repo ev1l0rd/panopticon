@@ -70,6 +70,7 @@ client = commands.Bot(self_bot=not config['bot_account'],
 if not config['commands_enabled']:
     client.remove_command('help')
 client.config = config
+client.appinfo_set = False
 
 if not config['commands_enabled']:
     client.load_extension("log")
@@ -84,6 +85,9 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------------')
+    if not client.appinfo_set:
+        client.appinfo = await client.application_info()
+        client.appinfo_set = True
 
 # Run client
 client.run(config['token'], bot=config['bot_account'], max_messages=7500, status=discord.Status.invisible)

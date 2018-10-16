@@ -7,7 +7,23 @@ import yaml
 from datetime import datetime
 import os
 
-config = yaml.safe_load(open('config.yaml'))
+'''
+logexisting.py - Module for panopticon to log existing messages.
+Copyright (C) 2018 - Valentijn V.
+
+This file is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+'''
 
 
 # This function stringifies roles.
@@ -43,7 +59,7 @@ def clean_filename(string):
 # This builds the relative file path & filename to log to,
 #   based on the channel type of the message.
 # It is affixed to the log directory set in config.py
-def make_filename(message):
+def make_filename(message, appname, appid):
     if message.edited_at:
         time = message.edited_at
     else:
@@ -52,8 +68,8 @@ def make_filename(message):
     month = time.strftime('%m')
     day = time.strftime('%F')
     if type(message.channel) is discord.TextChannel:
-        return "{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
-            config['log_dir'],
+        return "logs/{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
+            appname + '-' + appid,
             clean_filename(message.guild.name),
             message.guild.id,
             clean_filename(message.channel.name),
@@ -63,8 +79,8 @@ def make_filename(message):
             day
         )
     elif type(message.channel) is discord.DMChannel:
-        return "{}/DM/{}-{}/{}/{}/{}.log".format(
-            config['log_dir'],
+        return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
+            appname + '-' + appid,
             clean_filename(message.channel.recipient.name),
             message.channel.recipient.id,
             year,
@@ -72,8 +88,8 @@ def make_filename(message):
             day
         )
     elif type(message.channel) is discord.GroupChannel:
-        return "{}/DM/{}-{}/{}/{}/{}.log".format(
-            config['log_dir'],
+        return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
+            appname + '-' + appid,
             clean_filename(message.channel.name),
             message.channel.id,
             year,
@@ -84,11 +100,11 @@ def make_filename(message):
 # This builds the relative file path & filename to log to,
 # It is affixed to the log directory set in config.py
 # Optionally can accept an action param for a subfolder.
-def make_member_filename(member, action):
+def make_member_filename(member, action, appname, appid):
     time = datetime.utcnow()
     timestamp = time.strftime('%F')
-    return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-        config['log_dir'],
+    return "logs/{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
+        appname + '-' + appid,
         clean_filename(member.guild.name),
         member.guild.id,
         "guild-events",
