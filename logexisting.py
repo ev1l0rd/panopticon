@@ -83,7 +83,7 @@ class logExisting:
         print('Started archival of {}'.format(str(channel)))
         store_message = []
         async for message in channel.history(limit=None, reverse=True):
-            path = shared_funcs.make_filename(message, self.bot.appinfo.name, self.bot.appinfo.id)
+            path = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
             store_message.append([path, shared_funcs.make_message(message), message.created_at])
             if message.attachments and self.config['save_files']:
                 await shared_funcs.save_files(message, path)

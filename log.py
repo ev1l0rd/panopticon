@@ -70,7 +70,7 @@ class Panopticon:
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
         return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-            self.config['log_dir'],
+            shared_funcs.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
             shared_funcs.clean_filename(guild.name),
             guild.id,
             "guild-events",
@@ -106,7 +106,7 @@ class Panopticon:
     async def on_message(self, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_filename(message, self.bot.appinfo.name, self.bot.appinfo.id)
+        filename = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
         string = shared_funcs.make_message(message)
         shared_funcs.write(filename, string)
         if message.attachments and self.config['save_files']:
@@ -115,28 +115,28 @@ class Panopticon:
     async def on_message_edit(self, _, message):
         if message.guild and message.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_filename(message, self.bot.appinfo.name, self.bot.appinfo.id)
+        filename = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
         string = shared_funcs.make_message(message)
         shared_funcs.write(filename, string)
 
     async def on_member_join(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.appinfo.name, self.bot.appinfo.id)
+        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.user.name, self.bot.user.id)
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
         shared_funcs.write(filename, string)
 
     async def on_member_remove(self, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.appinfo.name, self.bot.appinfo.id)
+        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.user.name, self.bot.user.id)
         string = "{} {}".format(self.make_member_message(member), "Left guild")
         shared_funcs.write(filename, string)
 
     async def on_member_ban(self, _, member):
         if member.guild and member.guild.id in self.config['ignore_servers']:
             return
-        filename = shared_funcs.make_member_filename(member, "bans", self.bot.appinfo.name, self.bot.appinfo.id)
+        filename = shared_funcs.make_member_filename(member, "bans", self.bot.user.name, self.bot.user.id)
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
         shared_funcs.write(filename, string)
 

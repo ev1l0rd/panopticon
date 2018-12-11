@@ -7,3 +7,4 @@ venv/*
 .vscode
 supervisor_configs/*
 configs/*
+logs/*

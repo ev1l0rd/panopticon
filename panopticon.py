@@ -5,6 +5,7 @@ from discord.ext import commands
 import yaml
 import logging.config
 import argparse
+import base64
 
 '''
 Panopticon by Megumi Sonoda
@@ -42,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help='Config file location.', default=None)
+    parser.add_argument('-d', '--decode', help='Decode a stored ID.', default=None)
     return parser.parse_args()
 
 arguments = parse_arguments()
@@ -50,6 +52,10 @@ logging.basicConfig(format='%(asctime)s - [%(levelname)s] %(message)s', datefmt=
 logging.config.dictConfig({
     'version': 1,
     'disable_existing_loggers': True, })
+
+if arguments.decode:
+    print(int.from_bytes(base64.b64decode(arguments.decode), byteorder='little'))
+    exit(1)
 
 # Import configuration
 if not arguments.config:
@@ -70,7 +76,6 @@ client = commands.Bot(self_bot=not config['bot_account'],
 if not config['commands_enabled']:
     client.remove_command('help')
 client.config = config
-client.appinfo_set = False
 
 if not config['commands_enabled']:
     client.load_extension("log")
@@ -85,9 +90,6 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------------')
-    if not client.appinfo_set:
-        client.appinfo = await client.application_info()
-        client.appinfo_set = True
 
 # Run client
 client.run(config['token'], bot=config['bot_account'], max_messages=7500, status=discord.Status.invisible)
