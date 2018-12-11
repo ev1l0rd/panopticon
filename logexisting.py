@@ -25,7 +25,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-class logExisting:
+class logExisting(shared_funcs.BaseLogger):
     def __init__(self, bot):
         self.bot = bot
         self.config = bot.config
@@ -83,14 +83,14 @@ class logExisting:
         print('Started archival of {}'.format(str(channel)))
         store_message = []
         async for message in channel.history(limit=None, reverse=True):
-            path = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
-            store_message.append([path, shared_funcs.make_message(message), message.created_at])
+            path = self.make_filename(message)
+            store_message.append([path, self.make_message(message), message.created_at])
             if message.attachments and self.config['save_files']:
-                await shared_funcs.save_files(message, path)
+                await self.save_files(message, path)
 
         store_message.sort(key= lambda x: x[2])
         for message in store_message:
-            shared_funcs.write(message[0], message[1])
+            self.write(message[0], message[1])
 
     @commands.command()
     async def archive_dm(self, ctx, user_id: int):

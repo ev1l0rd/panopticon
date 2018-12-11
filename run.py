@@ -13,7 +13,7 @@ def gen_supervisor_conf(filename, realfilename):
     Parameters:
         filename (str): Filename without extension.
         realfilename (str): Full path to filename.'''
-    shared_funcs.write('supervisor_configs/{}.{}'.format(filename, 'ini'), '''
+    shared_funcs.BaseLogger().write('supervisor_configs/{}.{}'.format(filename, 'ini'), '''
 [program:{}]
 command = {} {} {}
 directory = {}

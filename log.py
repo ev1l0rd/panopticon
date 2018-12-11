@@ -24,7 +24,7 @@ import os
 import logging
 import shared_funcs
 
-class Panopticon:
+class Panopticon(shared_funcs.BaseLogger):
     def __init__(self, bot):
         self.bot = bot
         self.config = bot.config
@@ -69,9 +69,9 @@ class Panopticon:
     def make_member_separate_guild_filename(self, member, action, guild):
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
-        return "{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-            shared_funcs.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
-            shared_funcs.clean_filename(guild.name),
+        return "logs/{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
+            self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+            self.clean_filename(guild.name),
             guild.id,
             "guild-events",
             action,
@@ -104,51 +104,51 @@ class Panopticon:
 
 
     async def on_message(self, message):
-        if message.guild and message.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(message.guild):
             return
-        filename = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
-        string = shared_funcs.make_message(message)
-        shared_funcs.write(filename, string)
+        filename = self.make_filename(message)
+        string = self.make_message(message)
+        self.write(filename, string)
         if message.attachments and self.config['save_files']:
-            await shared_funcs.save_files(message, filename)
+            await self.save_files(message, filename)
 
     async def on_message_edit(self, _, message):
-        if message.guild and message.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(message.guild):
             return
-        filename = shared_funcs.make_filename(message, self.bot.user.name, self.bot.user.id)
-        string = shared_funcs.make_message(message)
-        shared_funcs.write(filename, string)
+        filename = self.make_filename(message)
+        string = self.make_message(message)
+        self.write(filename, string)
 
     async def on_member_join(self, member):
-        if member.guild and member.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(member.guild):
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.user.name, self.bot.user.id)
+        filename = self.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Joined guild")
-        shared_funcs.write(filename, string)
+        self.write(filename, string)
 
     async def on_member_remove(self, member):
-        if member.guild and member.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(member.guild):
             return
-        filename = shared_funcs.make_member_filename(member, "joins-leaves", self.bot.user.name, self.bot.user.id)
+        filename = self.make_member_filename(member, "joins-leaves")
         string = "{} {}".format(self.make_member_message(member), "Left guild")
-        shared_funcs.write(filename, string)
+        self.write(filename, string)
 
     async def on_member_ban(self, _, member):
-        if member.guild and member.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(member.guild):
             return
-        filename = shared_funcs.make_member_filename(member, "bans", self.bot.user.name, self.bot.user.id)
+        filename = self.make_member_filename(member, "bans")
         string = "{} {}".format(self.make_member_message(member), "Was banned from guild")
-        shared_funcs.write(filename, string)
+        self.write(filename, string)
 
-    async def on_member_unban(self, guild, member):
-        if guild and guild.id in self.config['ignore_servers']:
+    async def on_member_unban(self, guild, user):
+        if not self.list_pass(guild):
             return
-        filename = self.make_member_separate_guild_filename(member, "bans", guild)
-        string = "{} {}".format(self.make_member_message(member), "Was unbanned from guild")
-        shared_funcs.write(filename, string)
+        filename = self.make_member_separate_guild_filename(user, "bans", guild)
+        string = "{} {}".format(self.make_member_message(user), "Was unbanned from guild")
+        self.write(filename, string)
 
     async def on_member_update(self, before, after):
-        if before.guild and before.guild.id in self.config['ignore_servers']:
+        if not self.list_pass(before.guild):
             return
         needs_registering, changed_data = self.member_changed(before, after)
         if not needs_registering:
@@ -158,12 +158,12 @@ class Panopticon:
         if "old_username" in changed_data:
             strings.append("{} {} {} {}".format(prefix, changed_data["old_username"], "is now known under the username", changed_data["new_username"]))
         if "added_roles" in changed_data:
-            strings.append("{} {} {}".format(prefix, "Got the following roles added:", shared_funcs.stringify_roles(changed_data["added_roles"])))
+            strings.append("{} {} {}".format(prefix, "Got the following roles added:", self.stringify_roles(changed_data["added_roles"])))
         if "deleted_roles" in changed_data:
-            strings.append("{} {} {}".format(prefix, "Got the following roles removed:", shared_funcs.stringify_roles(changed_data["deleted_roles"])))
-        filename = shared_funcs.make_member_filename(after, "guild-updates", self.bot.appinfo.name, self.bot.appinfo.id)
+            strings.append("{} {} {}".format(prefix, "Got the following roles removed:", self.stringify_roles(changed_data["deleted_roles"])))
+        filename = self.make_member_filename(after, "guild-updates")
         for string in strings:
-            shared_funcs.write(filename, string)
+            self.write(filename, string)
 
 
 def setup(bot):
