@@ -11,10 +11,10 @@ prefix: '>'
 
 use_whitelist: False
 whitelist:
-- example
-- second server you might want to whitelist
+? example
+? second server you might want to whitelist
 
 use_blacklist: False
 blacklist:
-- example
-- second server you might want to ignore
+? example
+? second server you might want to ignore

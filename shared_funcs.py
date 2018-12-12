@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 class BaseLogger():
     config = {}
     bot = None
+    clean_regex = re.compile(r'[/\\:*?"<>|\x00-\x1f]')
 
     # This function stringifies roles.
     # Param: roles = List of roles to turn into a string
@@ -56,7 +57,7 @@ class BaseLogger():
     #   but given the predictable nature of our input in this application,
     #   they aren't handled here.
     def clean_filename(self, string):
-        return re.sub(r'[/\\:*?"<>|\x00-\x1f]', '', string)
+        return self.clean_regex.sub('', string)
 
     # This builds the relative file path & filename to log to,
     #   based on the channel type of the message.
@@ -71,7 +72,7 @@ class BaseLogger():
         day = time.strftime('%F')
         if type(message.channel) is discord.TextChannel:
             return "logs/{}/{}-{}/#{}-{}/{}/{}/{}.log".format(
-                self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+                '{}-{} '.format(self.clean_filename(self.bot.user.name), str(self.bot.user.id)),
                 self.clean_filename(message.guild.name),
                 message.guild.id,
                 self.clean_filename(message.channel.name),
@@ -82,7 +83,7 @@ class BaseLogger():
             )
         elif type(message.channel) is discord.DMChannel:
             return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
-                self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+                '{}-{} '.format(self.clean_filename(self.bot.user.name), str(self.bot.user.id)),
                 self.clean_filename(message.channel.recipient.name),
                 message.channel.recipient.id,
                 year,
@@ -91,7 +92,7 @@ class BaseLogger():
             )
         elif type(message.channel) is discord.GroupChannel:
             return "logs/{}/DM/{}-{}/{}/{}/{}.log".format(
-                self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+                '{}-{} '.format(self.clean_filename(self.bot.user.name), str(self.bot.user.id)),
                 self.clean_filename(message.channel.name),
                 message.channel.id,
                 year,
@@ -106,7 +107,7 @@ class BaseLogger():
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
         return "logs/{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-            self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+            '{}-{} '.format(self.clean_filename(self.bot.user.name), str(self.bot.user.id)),
             self.clean_filename(member.guild.name),
             member.guild.id,
             "guild-events",
@@ -122,14 +123,14 @@ class BaseLogger():
     # (embed) Description
     # (embed) ----
     def dissect_embed(self, embed):
-        dissected_embed = '\n(embed) ----'
+        dissected_embed = ['\n(embed) ----']
         if embed.title:
-            dissected_embed += '\n(embed) {embed.title}'
-            dissected_embed += '\n(embed) ----'
+            dissected_embed.append(f'\n(embed) {embed.title}')
+            dissected_embed.append('\n(embed) ----')
         if embed.description:
-            dissected_embed += '\n(embed) {embed.description}'
-            dissected_embed += '\n(embed) ----'      
-        return dissected_embed      
+            dissected_embed.append(f'\n(embed) {embed.description}')
+            dissected_embed.append('\n(embed) ----')
+        return "".join(dissected_embed)
 
     # Uses a Message object to build a very pretty string.
     # Format:
@@ -138,10 +139,11 @@ class BaseLogger():
     # If the message was edited, prefix messageid with E:
     #   and use the edited timestamp and not the original.
     def make_message(self, message):
-        message_id = '[E:' if message.edited_at else '['
-        message_id += "{}]".format(base64.b64encode(
-            int(message.id).to_bytes(8, byteorder='little')
-        ).decode('utf-8'))
+        message_id = ['[E:' if message.edited_at else '[', '{}'.format(
+            base64.b64decode(
+                int(message.id).to_bytes(8, byteorder='little')))]
+        message_id = "".join(message_id)
+
         if message.edited_at:
             time = message.edited_at
         else:

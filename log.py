@@ -70,7 +70,7 @@ class Panopticon(shared_funcs.BaseLogger):
         time = datetime.utcnow()
         timestamp = time.strftime('%F')
         return "logs/{0}/{1}-{2}/#{3}/{4}/{5}.log".format(
-            self.clean_filename(self.bot.user.name) + '-' + str(self.bot.user.id),
+            '{}-{} '.format(self.clean_filename(self.bot.user.name), str(self.bot.user.id)),
             self.clean_filename(guild.name),
             guild.id,
             "guild-events",
