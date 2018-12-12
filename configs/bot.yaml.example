@@ -10,11 +10,11 @@ prefix: '>'
 # Whitelist and blacklist below. Turn them on to use them. Use Guild IDs.
 
 use_whitelist: False
-whitelist:
-? example
-? second server you might want to whitelist
+whitelist: !!set
+ ? example
+ ? second server you might want to whitelist
 
 use_blacklist: False
-blacklist:
-? example
-? second server you might want to ignore
+blacklist: !!set
+ ? example
+ ? second server you might want to ignore
