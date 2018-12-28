@@ -7,6 +7,7 @@ A user-focused message logger for Discord, a la the built-in logging present in 
 * Python 3.5 or greater
 * [discord.py](https://github.com/Rapptz/discord.py) (rewrite branch)
 * pyyaml
+* ftfy (used to fix broken unicode characters since Discord doesn't bother with this)
 * `supervisord` if you want to use `run.py`. `supervisord` is Linux only.
 
 ## Installation, setup, and usage

@@ -6,6 +6,8 @@ import os
 import re
 import logging
 import shared_funcs
+import csv
+import ftfy
 
 '''
 logexisting.py - Module for panopticon to log existing messages.
@@ -81,16 +83,44 @@ class logExisting(shared_funcs.BaseLogger):
         '''
         channel = self.bot.get_channel(channel_id)
         print('Started archival of {}'.format(str(channel)))
-        store_message = []
-        async for message in channel.history(limit=None, reverse=True):
-            path = self.make_filename(message)
-            store_message.append([path, self.make_message(message), message.created_at])
-            if message.attachments and self.config['save_files']:
-                await self.save_files(message, path)
 
-        store_message.sort(key= lambda x: x[2])
-        for message in store_message:
-            self.write(message[0], message[1])
+        csv_files = set()
+
+        async for message in channel.history(limit=None, reverse=True):
+            # This is dumb but whatever
+            path = self.make_filename(message)[:-3]
+            path += 'csv'
+            csv_files.add(path)
+
+            # Make dirs before writing to them... since we aren't using self.write, this needs to be done manually.
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'a', newline='', encoding='utf-8') as csv_file: # Gonna append -> wont have to read in first that way
+                writer = csv.writer(csv_file)
+                writer.writerow([message.id, ftfy.fix_text(self.make_message(message), remove_terminal_escapes=False, 
+                    fix_encoding=False, fix_entities=False, uncurl_quotes=False, 
+                    fix_latin_ligatures=False, fix_character_width=False, fix_line_breaks=False, 
+                    fix_surrogates=False, remove_control_chars=True, remove_bom=False)]) # Strip any unicode control characters (like NULL bytes) from the string, they screw with encoding.
+
+            if message.attachments and self.config['save_files']:
+                await self.save_files(message, self.make_filename(message))
+
+        for csv_file in csv_files:
+            store_message = []
+
+            with open(csv_file, 'r', newline='', encoding='utf-8') as fp: # Time to read out our stored data!
+                messages = csv.reader(fp)
+                for message in messages:
+                    store_message.append(message)
+
+            # Dedumbing previous dumbing
+            outpath = csv_file[:-3]
+            outpath += 'log'
+
+            store_message.sort(key=lambda x: x[0]) # Fun fact -> Snowflakes count upwards.
+            for message in store_message:
+                self.write(outpath, message[1])
+            
+            os.remove(csv_file)
 
     @commands.command()
     async def archive_dm(self, ctx, user_id: int):
