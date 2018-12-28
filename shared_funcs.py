@@ -44,7 +44,7 @@ class BaseLogger():
     # This stores all attachments on a message in the following structure:
     #   path_to_log_file/messageid/attachment
     async def save_files(self, message, filename):
-        base_path = filename.replace('.log','/{}/'.format(message.id))
+        base_path = filename.replace('.log','/channel_attachments/{}/'.format(message.id))
         os.makedirs(os.path.dirname(base_path), exist_ok=True)
         for attach in message.attachments:
             try:
@@ -140,8 +140,8 @@ class BaseLogger():
     #   and use the edited timestamp and not the original.
     def make_message(self, message):
         message_id = ['[E:' if message.edited_at else '[', '{}'.format(
-            base64.b64decode(
-                int(message.id).to_bytes(8, byteorder='little')))]
+            base64.b64encode(
+                message.id.to_bytes(8, byteorder='little')).decode("utf-8")), ']']
         message_id = "".join(message_id)
 
         if message.edited_at:
